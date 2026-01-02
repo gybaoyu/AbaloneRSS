@@ -1,4 +1,4 @@
-package ink.abalone.rss.webconfig;
+package ink.abalone.rss.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

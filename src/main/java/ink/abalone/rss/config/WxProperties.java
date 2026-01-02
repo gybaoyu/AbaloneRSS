@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "wx")
 @Data
 public class WxProperties {
-
     private String appname;
     private String appid;
     private String appsecret;
