@@ -1,3 +1,11 @@
+- 新增文章时一键推送至公众号
+- 将文章放入回收站时将公众号文章退回草稿
+- 将文章永久删除时将公众号文章删除
+- 
+
+
+
+
 ```
 不强制刷新获取Token
     curl https://api.weixin.qq.com/cgi-bin/stable_token \

@@ -30,6 +30,5 @@ public class RSSBlogPost {
      * length="1024000" />
      */
     private Enclosure cover;
-
 }
 

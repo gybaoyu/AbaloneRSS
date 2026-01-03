@@ -1,11 +1,14 @@
 package ink.abalone.rss.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class JsonUtils {
+    private final Logger logger = LoggerFactory.getLogger(JsonUtils.class);
     private final ObjectMapper objectMapper;
     public JsonUtils(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
@@ -16,10 +19,7 @@ public class JsonUtils {
         try {
             return objectMapper.readValue(json, tClass);
         } catch (JsonProcessingException e) {
-            System.err.println(
-                    "\n[ERROR] json转对象失败,原json: "+json+
-                    "\n[ERROR] 目标类型: "+tClass.getName()+
-                    "\n[ERROR] 报错信息: "+e.getMessage());
+            logger.error("\n[ERROR] json转对象失败,原json: {}\n[ERROR] 目标类型: {}\n[ERROR] 报错信息: {}", json, tClass.getName(), e.getMessage());
             throw new RuntimeException(e);
         }
     }
