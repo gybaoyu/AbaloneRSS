@@ -3,10 +3,7 @@ package ink.abalone.rss.service.client;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import ink.abalone.rss.config.HaloProperties;
 import ink.abalone.rss.config.WxProperties;
-import ink.abalone.rss.entity.dto.AccessTokenResponse;
-import ink.abalone.rss.entity.dto.DraftAddRequest;
-import ink.abalone.rss.entity.dto.DraftAddResponse;
-import ink.abalone.rss.entity.dto.MaterialAddResponse;
+import ink.abalone.rss.entity.dto.*;
 import ink.abalone.rss.utils.JsonUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -74,7 +71,7 @@ public class WxClient {
                         .queryParam("access_token", getAccessToken())
                         .build())
                 .contentType(MediaType.APPLICATION_JSON)
-                .accept(MediaType.ALL) // ⭐ 关键：接受 text/plain
+                .accept(MediaType.ALL)
                 .bodyValue(request)
                 .retrieve()
                 .bodyToMono(String.class)
@@ -90,7 +87,6 @@ public class WxClient {
             throw new RuntimeException("解析 draft/add 返回失败，原始内容: " + raw, e);
         }
     }
-
 
     /**
      * 上传图片素材
@@ -139,10 +135,11 @@ public class WxClient {
      * 下载图片到本地并返回保存的 Path
      */
     public Path downloadFileToLocal(String fileUrl) {
-        System.out.println(fileUrl);
+        logger.info("下载文件: {}", fileUrl);
+
         while (fileUrl.contains("%25")) fileUrl = fileUrl.replace("%25", "%");
-        System.out.println(fileUrl);
         fileUrl = fileUrl.replace("&#38;", "&");
+
         byte[] imageBytes = webClient.get()
                 .uri(fileUrl)
                 .retrieve()
@@ -150,19 +147,61 @@ public class WxClient {
                 .block();
 
         if (imageBytes == null || imageBytes.length == 0)
-            throw new RuntimeException("File下载失败：" + fileUrl);
+            throw new RuntimeException("File 下载失败：" + fileUrl);
 
-        logger.info("Blog File下载成功");
+        logger.info("File 下载成功, size={} bytes", imageBytes.length);
 
         try {
-            Path filePath = Paths.get(haloProperties.getFilePath() + System.currentTimeMillis() + getFileExtension(fileUrl));
-            Files.write(filePath, imageBytes);
+            String basePath = haloProperties.getFilePath();
+            long ts = System.currentTimeMillis();
+
+            Path filePath;
+
+            //真实类型判断
+            if (isWebp(imageBytes)) {
+                logger.info("检测到 WebP，开始转 PNG");
+                byte[] pngBytes = webpToPng(imageBytes);
+                filePath = Paths.get(basePath + ts + ".png");
+                Files.write(filePath, pngBytes);
+            } else {
+                String ext = getFileExtension(fileUrl);
+                filePath = Paths.get(basePath + ts + ext);
+                Files.write(filePath, imageBytes);
+            }
+
+            logger.info("文件保存成功: {}", filePath);
             return filePath;
+
         } catch (IOException e) {
-            throw new RuntimeException("File写入失败", e);
+            throw new RuntimeException("File 写入失败", e);
         }
     }
 
+
+
+
+    private boolean isWebp(byte[] bytes) {
+        if (bytes.length < 12) return false;
+        return bytes[0] == 'R' && bytes[1] == 'I'
+                && bytes[2] == 'F' && bytes[3] == 'F'
+                && bytes[8] == 'W' && bytes[9] == 'E'
+                && bytes[10] == 'B' && bytes[11] == 'P';
+    }
+
+
+    private byte[] webpToPng(byte[] webpBytes) {
+        try {
+            BufferedImage image = ImageIO.read(new ByteArrayInputStream(webpBytes));
+            if (image == null) {
+                throw new RuntimeException("WebP 解码失败");
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            ImageIO.write(image, "png", baos);
+            return baos.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("WebP 转 PNG 失败", e);
+        }
+    }
 
 
     private String getFileExtension(String url) {

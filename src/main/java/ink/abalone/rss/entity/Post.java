@@ -33,4 +33,8 @@ public class Post {
      * false - 保持放在回收站
      */
     private Boolean isRestore;
+
+    public Post(String title) {
+        this.title = title;
+    }
 }

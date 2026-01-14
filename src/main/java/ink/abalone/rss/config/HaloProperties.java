@@ -14,4 +14,6 @@ public class HaloProperties {
      * 由于逻辑为先下载博客原附件中的图片,再上传至微信,所以需要一个中转路径保存附件,一般为服务器的地址
      */
     private String filePath;//附件保存路径
+
+    private String token;
 }

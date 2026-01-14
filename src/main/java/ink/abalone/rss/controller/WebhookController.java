@@ -42,9 +42,9 @@ public class WebhookController {
             case "DELETE_POST" -> {
                 Post post = jsonUtils.parseJson(webhook.getData().toString(), Post.class);
                 if (post.getIsPermanent()){
-                    logger.info("文章【{}】被彻底删除,同时在公众号上将该文章彻底删除", post.getTitle());
+                    logger.info("文章【{}】被彻底删除", post.getTitle());
                 }else {
-                    logger.info("文章【{}】被移入回收站,同时在公众号上将该文章移入草稿箱", post.getTitle());
+                    logger.info("文章【{}】被移入回收站", post.getTitle());
                 }
             }
             default -> logger.error("[ERROR] 收到未知请求: {}", webhook);
